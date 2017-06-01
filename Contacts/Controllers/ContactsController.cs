@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using Contacts.Models;
+using Microsoft.AspNet.Identity;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
-using Contacts.Models;
 
 namespace Contacts.Controllers
 {
@@ -50,6 +47,12 @@ namespace Contacts.Controllers
         {
             if (ModelState.IsValid)
             {
+                // The following four lines of code link the contact to the user creating it.
+                string currentUserId = User.Identity.GetUserId();
+                ApplicationUser currentUser = db.Users.FirstOrDefault
+                    (u => u.Id == currentUserId);
+                contact.User = currentUser;
+
                 db.Contacts.Add(contact);
                 db.SaveChanges();
                 return RedirectToAction("Index");
