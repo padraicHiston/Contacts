@@ -1,5 +1,6 @@
 ﻿using Contacts.Models;
 using Microsoft.AspNet.Identity;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
@@ -14,7 +15,23 @@ namespace Contacts.Controllers
         // GET: Contacts
         public ActionResult Index()
         {
-            return View(db.Contacts.ToList());
+            return View();
+        }
+
+        private IEnumerable<Contact> GetMyContacts()
+        {
+            string currentUserId = User.Identity.GetUserId();
+            ApplicationUser currentUser = db.Users.FirstOrDefault
+                (u => u.Id == currentUserId);
+
+            IEnumerable<Contact> myContacts = db.Contacts.ToList();
+
+            return myContacts;
+        }
+
+        public ActionResult BuildContactTable()
+        {
+            return PartialView("_ContactListTable", GetMyContacts());
         }
 
         // GET: Contacts/Details/5
@@ -59,6 +76,25 @@ namespace Contacts.Controllers
             }
 
             return View(contact);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AJAXCreate([Bind(Include = "Id,FirstName,LastName,PhoneNumber,Email")] Contact contact)
+        {
+            if (ModelState.IsValid)
+            {
+                // The following four lines of code link the contact to the user creating it.
+                string currentUserId = User.Identity.GetUserId();
+                ApplicationUser currentUser = db.Users.FirstOrDefault
+                    (u => u.Id == currentUserId);
+
+                contact.User = currentUser;
+                db.Contacts.Add(contact);
+                db.SaveChanges();
+            }
+
+            return PartialView("_ContactListTable", GetMyContacts());
         }
 
         // GET: Contacts/Edit/5
